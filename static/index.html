@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TraceGuard — Web Attack Path Reconstruction System</title>
+  <meta name="description" content="TraceGuard: Defensible, evidence-linked web attack path reconstruction platform with real-world case studies, multi-source correlation, competing explanations, and cryptographic forensic verification.">
+  
+  <!-- Typography: Outfit & Fira Code from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <!-- Top Navigation & Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-logo" id="brandHomeLink" title="Return to Overview">
+        <svg class="shield-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path d="M12 8v4" stroke="#20B8A8" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="12" cy="16" r="1.2" fill="#20B8A8"/>
+        </svg>
+        <div class="brand-text">
+          <span class="brand-title">TRACE<span class="accent">GUARD</span></span>
+          <span class="brand-subtitle">Web Attack Path Reconstruction System</span>
+        </div>
+      </div>
+      <div class="system-status-pill">
+        <span class="status-dot pulsing"></span>
+        <span id="caseTypeHeaderBadge" class="status-label">DEFENSIBLE RECONSTRUCTION ACTIVE</span>
+      </div>
+    </div>
+
+    <div class="header-center">
+      <div class="case-selector-wrapper">
+        <label for="caseSelect" class="case-label">ACTIVE CASE:</label>
+        <select id="caseSelect" class="cyber-select" aria-label="Select Active Investigation Case">
+          <option value="" disabled selected>Loading cases...</option>
+        </select>
+        <button id="btnNewCase" class="btn-icon" title="Create New Investigation Case" aria-label="Create New Case">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <button id="btnImportEvidence" class="btn-cyber btn-primary" title="Upload original logs, CSV, PCAP, or PDF reports">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="17 8 12 3 7 8"></polyline>
+          <line x1="12" y1="3" x2="12" y2="15"></line>
+        </svg>
+        <span>Upload Logs or Evidence</span>
+      </button>
+
+      <button id="btnVerifyIntegrity" class="btn-cyber btn-secondary" title="Check whether evidence files have changed since import">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+        <span>Check File Integrity</span>
+      </button>
+
+      <button id="btnRunBenchmark" class="btn-cyber btn-secondary" title="Run controlled attack simulation tests">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+        <span>Run Test</span>
+      </button>
+
+      <div class="dropdown-export">
+        <button id="btnExportMenu" class="btn-cyber btn-accent">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span>Download Case Report</span>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+        </button>
+        <div id="exportDropdownMenu" class="dropdown-content">
+          <a href="#" id="btnDownloadPDF">📄 Download PDF Report</a>
+          <a href="#" id="btnDownloadJSON">💾 Download Full JSON Bundle</a>
+          <a href="#" id="btnGoToReportSection">👁️ Preview Report in Dashboard</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-main">
+    
+    <!-- Workspace Navigation Tabs (9 Core Sections) -->
+    <nav class="workspace-tabs" role="tablist" aria-label="Investigation Workspace Sections">
+      <button class="tab-btn active" data-tab="overviewTab" role="tab" aria-selected="true" id="tabNavOverview">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        <span>Overview</span>
+      </button>
+
+      <button class="tab-btn" data-tab="libraryTab" role="tab" aria-selected="false" id="tabNavLibrary">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+        <span>Case Library</span>
+        <span class="tab-badge" id="badgeRealCasesCount">5</span>
+      </button>
+
+      <button class="tab-btn" data-tab="graphTab" role="tab" aria-selected="false" id="tabNavGraph">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        <span>Attack Path</span>
+      </button>
+
+      <button class="tab-btn" data-tab="timelineTab" role="tab" aria-selected="false" id="tabNavTimeline">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Event Timeline</span>
+      </button>
+
+      <button class="tab-btn" data-tab="hypothesesTab" role="tab" aria-selected="false" id="tabNavHypotheses">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="15"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M18 9a9 9 0 0 1-9 9"/></svg>
+        <span>Other Possible Explanations</span>
+        <span id="badgeHypCount" class="tab-badge">3</span>
+      </button>
+
+      <button class="tab-btn" data-tab="gapsTab" role="tab" aria-selected="false" id="tabNavGaps">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Missing Evidence</span>
+        <span id="badgeGapCount" class="tab-badge badge-red">--</span>
+      </button>
+
+      <button class="tab-btn" data-tab="custodyTab" role="tab" aria-selected="false" id="tabNavCustody">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span>Evidence Integrity</span>
+      </button>
+
+      <button class="tab-btn" data-tab="benchmarkTab" role="tab" aria-selected="false" id="tabNavBenchmark">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        <span>Test Results</span>
+      </button>
+
+      <button class="tab-btn" data-tab="reportTab" role="tab" aria-selected="false" id="tabNavReport">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+        <span>Download Case Report</span>
+      </button>
+    </nav>
+
+    <!-- Tab Contents Container -->
+    <div class="tab-content-container">
+
+      <!-- ==============================================================
+           SECTION 1: Overview
+           ============================================================== -->
+      <div id="overviewTab" class="tab-pane active" role="tabpanel">
+        <div class="section-intro">
+          <h2>Overview: Active Case Summary & Key Metrics</h2>
+          <p>Shows summary metrics calculated from actual case data, along with a plain-English explanation of the incident and quick action controls.</p>
+        </div>
+
+        <!-- HUD Metrics Bar -->
+        <section class="hud-metrics-bar" aria-label="Investigation Key Metrics">
+          <div class="hud-card">
+            <div class="hud-card-header">
+              <span class="hud-title">EVENTS CONNECTED</span>
+              <span class="hud-icon text-cyan">⚡</span>
+            </div>
+            <div class="hud-card-body">
+              <span id="metricTotalEvents" class="hud-value">--</span>
+              <span id="metricSourcesBreakdown" class="hud-sub">Multi-source telemetry</span>
+              <span class="hud-explain">Total log records and observations analyzed in this case.</span>
+            </div>
+          </div>
+
+          <div class="hud-card">
+            <div class="hud-card-header">
+              <span class="hud-title">ATTACK STEPS FOUND</span>
+              <span class="hud-icon text-amber">🔗</span>
+            </div>
+            <div class="hud-card-body">
+              <span id="metricReconstructedSteps" class="hud-value">--</span>
+              <span id="metricEntryPoint" class="hud-sub">Suspected entry identified</span>
+              <span class="hud-explain">Key stages and suspicious actions identified across evidence.</span>
+            </div>
+          </div>
+
+          <div class="hud-card">
+            <div class="hud-card-header">
+              <span class="hud-title">LINKS SUPPORTED BY EVIDENCE</span>
+              <span class="hud-icon text-green">🛡️</span>
+            </div>
+            <div class="hud-card-body">
+              <span id="metricStrongLinks" class="hud-value">--</span>
+              <span id="metricDefensibilityPct" class="hud-sub">Defensible correlations</span>
+              <span class="hud-explain">Connections backed by matching session, request ID, or official reports.</span>
+            </div>
+          </div>
+
+          <div class="hud-card">
+            <div class="hud-card-header">
+              <span class="hud-title">POSSIBLE EXPLANATIONS</span>
+              <span class="hud-icon text-purple">🔀</span>
+            </div>
+            <div class="hud-card-body">
+              <span id="metricHypothesesCount" class="hud-value">--</span>
+              <span id="metricPrimaryLikelihood" class="hud-sub">Primary likelihood rating</span>
+              <span class="hud-explain">Alternative hypotheses evaluated to prevent premature conclusions.</span>
+            </div>
+          </div>
+
+          <div class="hud-card">
+            <div class="hud-card-header">
+              <span class="hud-title">MISSING EVIDENCE</span>
+              <span class="hud-icon text-red">⚠️</span>
+            </div>
+            <div class="hud-card-body">
+              <span id="metricEvidenceGaps" class="hud-value">--</span>
+              <span id="metricGapsStatus" class="hud-sub">Telemetry blind spots</span>
+              <span class="hud-explain">Identifies missing logs that would help confirm what happened.</span>
+            </div>
+          </div>
+
+          <div class="hud-card">
+            <div class="hud-card-header">
+              <span class="hud-title">EVIDENCE HANDLING RECORD</span>
+              <span class="hud-icon text-cyan">🔐</span>
+            </div>
+            <div class="hud-card-body">
+              <span id="metricCustodyStatus" class="hud-value text-green">100%</span>
+              <span class="hud-sub">SHA-256 Tamper-Proof</span>
+              <span class="hud-explain">Checks whether files have changed since their saved hash was recorded.</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Overview Details Grid -->
+        <div class="overview-grid">
+          <div class="overview-card">
+            <h3>
+              <span id="overviewCaseTitle">Active Case Title</span>
+              <span id="overviewClassificationBadge" class="badge-classification badge-public-fact">Publicly Reported Fact</span>
+            </h3>
+            <p id="overviewCaseSimpleDesc" class="overview-desc">
+              Loading incident details...
+            </p>
+
+            <div class="overview-facts-box" id="overviewWhatHappenedBox">
+              <h4>What Happened</h4>
+              <p id="overviewWhatHappenedText">--</p>
+            </div>
+
+            <div class="overview-facts-box" id="overviewWhatAffectedBox">
+              <h4>What Was Affected</h4>
+              <p id="overviewWhatAffectedText">--</p>
+            </div>
+
+            <div class="overview-facts-box" id="overviewResponseBox">
+              <h4>Documented Response</h4>
+              <p id="overviewResponseText">--</p>
+            </div>
+
+            <div class="quick-actions-bar">
+              <button id="btnOverviewViewGraph" class="btn-cyber btn-primary">
+                <span>View Attack Path</span> →
+              </button>
+              <button id="btnOverviewViewTimeline" class="btn-cyber btn-secondary">
+                <span>Event Timeline</span>
+              </button>
+              <button id="btnOverviewViewIntegrity" class="btn-cyber btn-secondary">
+                <span>Check File Integrity</span>
+              </button>
+              <button id="btnOverviewExportReport" class="btn-cyber btn-accent">
+                <span>Download Case Report</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Case Context Sidebar -->
+          <div class="overview-card">
+            <h3>Case Details & Citations</h3>
+            <div class="case-detail-block">
+              <span class="case-detail-label">Incident ID</span>
+              <span id="overviewCaseId" class="case-detail-val font-mono">--</span>
+            </div>
+            <div class="case-detail-block">
+              <span class="case-detail-label">Year & Country</span>
+              <span id="overviewYearCountry" class="case-detail-val">--</span>
+            </div>
+            <div class="case-detail-block">
+              <span class="case-detail-label">Target Industry</span>
+              <span id="overviewIndustry" class="case-detail-val">--</span>
+            </div>
+            <div class="case-detail-block">
+              <span class="case-detail-label">Lead Investigator</span>
+              <span id="overviewInvestigator" class="case-detail-val">--</span>
+            </div>
+            <div class="case-detail-block">
+              <span class="case-detail-label">Official Source Verification</span>
+              <div id="overviewSourceLinksContainer">--</div>
+            </div>
+            <div style="margin-top: 14px;">
+              <button id="btnOverviewOpenLibrary" class="btn-cyber btn-secondary" style="width: 100%; justify-content: center;">
+                Browse All 5 Case Studies
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           SECTION 2: Case Library
+           ============================================================== -->
+      <div id="libraryTab" class="tab-pane" role="tabpanel">
+        <div class="section-intro">
+          <h2>Case Library: Real-World Incidents & Controlled Demonstration Scenarios</h2>
+          <p>Browse documented national and worldwide cyber intrusions with official government and vendor citations, known attack steps, and available evidence vs missing information.</p>
+        </div>
+
+        <div class="library-filter-bar">
+          <div class="filter-pills">
+            <button class="filter-pill active" data-filter="ALL">All Incidents</button>
+            <button class="filter-pill" data-filter="INDIA">India (3)</button>
+            <button class="filter-pill" data-filter="WORLDWIDE">Worldwide (2)</button>
+            <button class="filter-pill" data-filter="DEMO">Demonstration Scenarios (3)</button>
+          </div>
+          <div>
+            <span style="font-size: 0.78rem; color: var(--text-secondary);">Select any incident to inspect its attack path, timeline, and evidence.</span>
+          </div>
+        </div>
+
+        <div id="caseCardsGrid" class="case-cards-grid">
+          <!-- Dynamically populated cards for Cosmos Bank, AIIMS, Air India/SITA, CISA Log4Shell, Microsoft BlackByte, and Demo scenarios -->
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           SECTION 3: Attack Path
+           ============================================================== -->
+      <div id="graphTab" class="tab-pane" role="tabpanel">
+        <div class="section-intro">
+          <h2>Attack Path: Evidence-Linked Attack Graph</h2>
+          <p><strong>Attack Path:</strong> Shows how events may be connected during an incident. Every connection is backed by evidence — events are never linked merely because they occurred close in time.</p>
+        </div>
+
+        <!-- Graph Toolbar -->
+        <div class="graph-toolbar">
+          <div class="hypothesis-selector-ribbon">
+            <span class="ribbon-label">POSSIBLE EXPLANATION:</span>
+            <div id="hypothesisButtonsContainer" class="btn-group-toggle">
+              <!-- Dynamically populated hypothesis switchers -->
+            </div>
+          </div>
+
+          <!-- Link Type Filters -->
+          <div class="link-filter-group" aria-label="Filter Link Types">
+            <span class="ribbon-label">LINKS:</span>
+            <button id="btnFilterStrong" class="btn-filter-link active" data-type="STRONGLY_SUPPORTED" title="Green: Strong evidence links (Session/Request ID match or official report)">
+              <span class="filter-indicator ind-strong"></span> Strong (<span id="countStrong">0</span>)
+            </button>
+            <button id="btnFilterPartial" class="btn-filter-link active" data-type="PARTIALLY_SUPPORTED" title="Amber: Partial evidence links (IP or user operational progression)">
+              <span class="filter-indicator ind-partial"></span> Partial (<span id="countPartial">0</span>)
+            </button>
+            <button id="btnFilterSpeculative" class="btn-filter-link active" data-type="SPECULATIVE" title="Purple: Possible or unconfirmed links (Target alignment with evidence gaps)">
+              <span class="filter-indicator ind-speculative"></span> Possible (<span id="countSpeculative">0</span>)
+            </button>
+          </div>
+
+          <!-- Zoom & Pan Controls -->
+          <div class="graph-actions">
+            <button id="btnZoomIn" class="btn-icon-control" title="Zoom In (+)">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button id="btnZoomOut" class="btn-icon-control" title="Zoom Out (−)">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </button>
+            <button id="btnFitView" class="btn-icon-control" title="Fit to Screen (Center and scale all nodes)">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="12" cy="12" r="3"></circle></svg>
+              <span>Fit View</span>
+            </button>
+            <button id="btnResetLayout" class="btn-icon-control" title="Reset Layout (Recalculate positions)">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+              <span>Reset</span>
+            </button>
+            <button id="btnToggleMinimap" class="btn-icon-control active" title="Toggle Minimap Radar">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+              <span>Map</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Graph Canvas SVG Container -->
+        <div class="graph-canvas-container" id="graphContainer">
+          <svg id="attackGraphSvg" class="attack-graph-svg">
+            <defs>
+              <!-- Arrowhead markers matching required palette -->
+              <marker id="arrow-strong" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#36C995"/>
+              </marker>
+              <marker id="arrow-partial" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#F2A541"/>
+              </marker>
+              <marker id="arrow-speculative" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#B794F6"/>
+              </marker>
+              <!-- Filter for card glow and subtle drop shadow -->
+              <filter id="node-shadow" x="-15%" y="-15%" width="130%" height="130%">
+                <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000000" flood-opacity="0.6"/>
+              </filter>
+            </defs>
+            <g id="graphZoomGroup">
+              <g id="edgesLayer"></g>
+              <g id="nodesLayer"></g>
+            </g>
+          </svg>
+
+          <!-- Minimap Overlay -->
+          <div id="graphMinimap" class="graph-minimap">
+            <div class="minimap-header">
+              <span>RADAR MINIMAP</span>
+              <button id="btnCloseMinimap" class="btn-minimap-close" title="Minimize Map">✕</button>
+            </div>
+            <svg id="minimapSvg" class="minimap-svg">
+              <g id="minimapContent"></g>
+              <rect id="minimapViewport" class="minimap-viewport-box" x="0" y="0" width="40" height="30"></rect>
+            </svg>
+          </div>
+
+          <!-- Interactive Tooltip -->
+          <div id="graphTooltip" class="graph-floating-tooltip hidden">
+            <div class="tooltip-header" id="ttHeader">
+              <span id="ttCategoryPill" class="tt-category-pill">EXPLOITATION</span>
+              <span id="ttId" class="tt-id">EVT-A1B2C3</span>
+            </div>
+            <div class="tooltip-title" id="ttTitle">POST /portal/upload.php</div>
+            <div class="tooltip-grid">
+              <div class="tt-row"><span class="tt-lbl">Timestamp:</span><span id="ttTime" class="tt-val">--</span></div>
+              <div class="tt-row"><span class="tt-lbl">Classification:</span><span id="ttClassification" class="tt-val">--</span></div>
+              <div class="tt-row"><span class="tt-lbl">Source IP:</span><span id="ttIp" class="tt-val">--</span></div>
+              <div class="tt-row"><span class="tt-lbl">Status Code:</span><span id="ttStatus" class="tt-val">--</span></div>
+              <div class="tt-row"><span class="tt-lbl">Source File:</span><span id="ttFile" class="tt-val">--</span></div>
+              <div class="tt-row" id="ttRowSession"><span class="tt-lbl">Session / User:</span><span id="ttSession" class="tt-val">--</span></div>
+              <div class="tt-row" id="ttRowTrace"><span class="tt-lbl">Request ID:</span><span id="ttTrace" class="tt-val">--</span></div>
+              <div class="tt-row" id="ttRowIndicators"><span class="tt-lbl">Indicators:</span><span id="ttIndicators" class="tt-val text-red">--</span></div>
+              <div class="tt-row" id="ttRowMitre"><span class="tt-lbl">MITRE ATT&CK:</span><span id="ttMitre" class="tt-val text-cyan">--</span></div>
+              <div class="tt-row"><span class="tt-lbl">SHA-256 Hash:</span><span id="ttHash" class="tt-val font-mono">--</span></div>
+            </div>
+            <div class="tooltip-footer" id="ttFooter">👉 Click node to open full evidence drawer</div>
+          </div>
+
+          <!-- Graph Status HUD Overlay -->
+          <div class="graph-hud-overlay">
+            <div class="hud-status-badge">
+              <span class="status-pulse"></span>
+              <span id="graphNodeCountStatus">0 Nodes • 0 Links</span>
+              <span class="hud-sep">|</span>
+              <span id="graphZoomStatus">Zoom: 100%</span>
+            </div>
+            <div class="hud-instructions">
+              <span>🖱️ Drag to pan • Scroll to zoom • Click node or link to view evidence reasoning</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           SECTION 4: Event Timeline
+           ============================================================== -->
+      <div id="timelineTab" class="tab-pane" role="tabpanel">
+        <div class="section-intro">
+          <h2>Event Timeline: Chronological Events and Actions</h2>
+          <p><strong>Event Timeline:</strong> Shows events and actions in chronological order. Each event shows its source, classification, severity, and verbatim record.</p>
+        </div>
+
+        <div class="timeline-controls-bar">
+          <div class="search-input-wrapper">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="timelineSearch" placeholder="Search by IP, endpoint, indicator, or keyword..." class="cyber-input">
+          </div>
+
+          <div class="filter-group">
+            <label for="filterSource">Source:</label>
+            <select id="filterSource" class="cyber-select-sm">
+              <option value="">All Sources</option>
+              <option value="nginx">Nginx</option>
+              <option value="apache">Apache</option>
+              <option value="app_log">Application</option>
+              <option value="waf_alert">WAF Alert</option>
+              <option value="public_report">Public Report</option>
+              <option value="pdf_report">PDF Report</option>
+              <option value="auth_log">Authentication</option>
+              <option value="pcap_network">PCAP Network</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filterSeverity">Severity:</label>
+            <select id="filterSeverity" class="cyber-select-sm">
+              <option value="">All Severities</option>
+              <option value="CRITICAL">Critical</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="INFO">Info</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="timeline-stream-container" id="timelineStream">
+          <!-- Dynamically populated timeline entries -->
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           SECTION 5: Other Possible Explanations (Hypotheses)
+           ============================================================== -->
+      <div id="hypothesesTab" class="tab-pane" role="tabpanel">
+        <div class="section-intro">
+          <h2>Other Possible Explanations: Competing Hypotheses</h2>
+          <p><strong>Other Possible Explanations:</strong> Examines alternative ways the incident may have occurred instead of forcing an unconfirmed single explanation.</p>
+        </div>
+
+        <div class="hypotheses-grid" id="hypothesesGrid">
+          <!-- Dynamically rendered hypothesis cards -->
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           SECTION 6: Missing Evidence (Evidence Gaps)
+           ============================================================== -->
+      <div id="gapsTab" class="tab-pane" role="tabpanel">
+        <div class="section-intro">
+          <h2>Missing Evidence: Telemetry Gaps and Blind Spots</h2>
+          <p><strong>Missing Evidence:</strong> Shows information that would help confirm what happened. Where logs are incomplete, TraceGuard highlights missing evidence instead of inventing events.</p>
+        </div>
+
+        <div class="gaps-container" id="gapsContainer">
+          <!-- Dynamically rendered gap cards -->
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           SECTION 7: Evidence Integrity
+           ============================================================== -->
+      <div id="custodyTab" class="tab-pane" role="tabpanel">
+        <div class="section-intro">
+          <h2>Evidence Integrity: Cryptographic Hashing and Chain of Custody</h2>
+          <p><strong>Evidence Integrity:</strong> Checks whether a file has changed since its saved hash was recorded. Preserves original files and tracks all evidence-handling actions.</p>
+        </div>
+
+        <div class="custody-card">
+          <div class="custody-header">
+            <h3>Registered Evidence Files & Cryptographic SHA-256 Digests</h3>
+            <button id="btnRecalculateIntegrity" class="btn-cyber btn-primary">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+              <span>Check File Integrity Now</span>
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="cyber-table" id="evidenceFilesTable">
+              <thead>
+                <tr>
+                  <th>Evidence File</th>
+                  <th>Classification</th>
+                  <th>Format</th>
+                  <th>Records</th>
+                  <th>Size</th>
+                  <th>SHA-256 Hash Digest</th>
+                  <th>Custody Officer</th>
+                  <th>Imported (UTC)</th>
+                  <th>Integrity Match</th>
+                </tr>
+              </thead>
+              <tbody id="evidenceFilesBody">
+                <!-- Dynamically populated files -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Integrity Disclaimer Banner -->
+          <div class="integrity-disclaimer-banner">
+            <strong>Important Evidentiary Notice:</strong> A matching hash confirms that the file matches the version used to create the stored hash; it does not prove that the original file was authentic before import.
+          </div>
+        </div>
+
+        <!-- Verification Results Card -->
+        <div id="integrityVerificationResult" class="integrity-result-card hidden">
+          <!-- Verification summary inserted dynamically -->
+        </div>
+
+        <!-- Evidence Handling Record (Chain of Custody) -->
+        <div class="custody-card" style="margin-top: 20px;">
+          <div class="custody-header">
+            <h3>Evidence Handling Record (Custody Audit Log)</h3>
+            <span style="font-size: 0.76rem; color: var(--text-secondary);">Immutable chronological log of all evidence actions</span>
+          </div>
+          <div class="table-responsive">
+            <table class="cyber-table" id="custodyActionsTable">
+              <thead>
+                <tr>
+                  <th>Timestamp (UTC)</th>
+                  <th>Action</th>
+                  <th>Officer</th>
+                  <th>Details</th>
+                </tr>
+              </thead>
+              <tbody id="custodyActionsBody">
+                <!-- Dynamically populated actions -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           SECTION 8: Test Results (Evaluation Benchmark)
+           ============================================================== -->
+      <div id="benchmarkTab" class="tab-pane" role="tabpanel">
+        <div class="section-intro">
+          <h2>Test Results: Controlled Attack Simulation Benchmarks</h2>
+          <p><strong>Test Results:</strong> Evaluates system reconstruction against controlled attack test scenarios. Explains what was detected, what was missed, and why under controlled conditions.</p>
+        </div>
+
+        <div class="benchmark-dashboard" id="benchmarkDashboard">
+          <!-- Disclaimer Banner -->
+          <div class="benchmark-disclaimer-banner">
+            <strong>Testing Disclaimer:</strong> Simulated tests evaluate detection rules under controlled synthetic conditions; they do not prove real-world detection accuracy across unmodeled enterprise environments.
+          </div>
+
+          <div style="background: var(--panel-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <h3 style="font-size: 1.05rem; font-weight: 700; color: var(--text-main); margin-bottom: 4px;">Execute Controlled Test Suite</h3>
+              <p style="font-size: 0.82rem; color: var(--text-secondary);">Runs all 5 controlled testing scenarios and evaluates attack-path reconstruction, correlation rules, and gap detection.</p>
+            </div>
+            <button id="btnRunBenchmarkInner" class="btn-cyber btn-primary">
+              ⚡ Run Test Scenarios Now
+            </button>
+          </div>
+
+          <!-- Controlled Test Scenarios Grid -->
+          <div class="scenarios-grid" id="testScenariosGrid">
+            <!-- Dynamically populated 5 test scenario cards -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ==============================================================
+           SECTION 9: Download Case Report
+           ============================================================== -->
+      <div id="reportTab" class="tab-pane" role="tabpanel">
+        <div class="section-intro">
+          <h2>Download Case Report: Forensic Investigation Dossier</h2>
+          <p><strong>Download Case Report:</strong> Generates a professional downloadable case report containing case overview, source links, file inventory, timeline, attack path, supporting evidence, other possible explanations, missing evidence, integrity results, and limitations.</p>
+        </div>
+
+        <div class="report-export-view">
+          <div class="report-export-banner">
+            <div class="report-banner-text">
+              <h3>Export Official Case Dossier</h3>
+              <p>Download the full defensible report in standard PDF format or machine-readable JSON bundle.</p>
+            </div>
+            <div class="report-banner-actions">
+              <button id="btnDownloadPDFDirect" class="btn-cyber btn-primary">
+                📄 Download PDF Report
+              </button>
+              <button id="btnDownloadJSONDirect" class="btn-cyber btn-secondary">
+                💾 Download JSON Evidence Bundle
+              </button>
+            </div>
+          </div>
+
+          <!-- Live Report Preview -->
+          <div class="report-preview-container" id="reportPreviewContainer">
+            <div class="report-preview-header">
+              <span class="badge-classification badge-public-fact" id="reportPreviewBadge">OFFICIAL FORENSIC DOSSIER</span>
+              <h3 id="reportPreviewTitle" style="font-size: 1.25rem; font-weight: 800; color: var(--text-main); margin-top: 8px;">--</h3>
+              <p id="reportPreviewSubtitle" style="font-size: 0.85rem; color: var(--accent-primary); margin-top: 4px;">--</p>
+            </div>
+
+            <div id="reportPreviewContent">
+              <!-- Dynamically populated preview of all 10 report sections -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Slide-Out Evidence Drawer -->
+  <aside id="evidenceDrawer" class="evidence-drawer" aria-hidden="true">
+    <div class="drawer-header">
+      <div class="drawer-title-group">
+        <span class="drawer-badge" id="drawerBadge">EVIDENCE RECORD</span>
+        <h3 id="drawerTitle" class="drawer-title">Event Inspection</h3>
+      </div>
+      <button id="btnCloseDrawer" class="btn-close-drawer" aria-label="Close Evidence Inspector">✕</button>
+    </div>
+
+    <div class="drawer-body">
+      <!-- Cryptographic Proof Card -->
+      <div class="proof-card">
+        <div class="proof-header">
+          <span class="proof-icon">🔐</span>
+          <span class="proof-title">Cryptographic Integrity Certificate</span>
+        </div>
+        <div class="proof-details">
+          <div class="proof-row">
+            <span class="proof-label">Algorithm:</span>
+            <span class="proof-val">SHA-256</span>
+          </div>
+          <div class="proof-row">
+            <span class="proof-label">Record Hash:</span>
+            <code id="drawerHash" class="proof-hash">--</code>
+          </div>
+          <div class="proof-row">
+            <span class="proof-label">Source File:</span>
+            <span id="drawerSourceFile" class="proof-val">--</span>
+          </div>
+          <div class="proof-row">
+            <span class="proof-label">Line / Offset:</span>
+            <span id="drawerLineOffset" class="proof-val">--</span>
+          </div>
+          <div class="proof-row">
+            <span class="proof-label">Tamper Check:</span>
+            <span id="drawerTamperStatus" class="proof-val badge-verified">VERIFIED UNTOUCHED</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Original Verbatim Record -->
+      <div class="drawer-section">
+        <div class="section-header-row">
+          <h4>Original Verbatim Log / Report Record</h4>
+          <button id="btnCopyRawLog" class="btn-cyber-xs" title="Copy raw record text">Copy</button>
+        </div>
+        <pre id="drawerRawLog" class="code-block-raw">Loading record...</pre>
+      </div>
+
+      <!-- Extracted Forensic Fields -->
+      <div class="drawer-section">
+        <h4>Extracted Forensic Fields</h4>
+        <div class="extracted-fields-grid" id="drawerFieldsGrid">
+          <!-- Dynamically populated fields -->
+        </div>
+      </div>
+
+      <!-- Correlation Connection Section (When an edge or connected node is selected) -->
+      <div id="drawerCorrelationSection" class="drawer-section hidden">
+        <h4>Connection Reason & Supporting Evidence</h4>
+        <div class="correlation-explanation-card">
+          <div class="corr-rule-title" id="drawerRuleName">--</div>
+          <div class="corr-confidence" id="drawerConfidenceBadge">--</div>
+          <p id="drawerExplanation" class="corr-text">--</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Drawer Backdrop -->
+  <div id="drawerBackdrop" class="drawer-backdrop"></div>
+
+  <!-- Modal: Upload Logs or Evidence -->
+  <div id="modalImport" class="cyber-modal-overlay hidden">
+    <div class="cyber-modal">
+      <div class="modal-header">
+        <h3>Upload Logs or Evidence into Active Case</h3>
+        <button class="btn-close-modal" data-close="modalImport">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Evidence Mode:</label>
+          <div class="btn-group-toggle">
+            <button id="btnModePaste" class="btn-toggle active">Paste Log Text</button>
+            <button id="btnModeUpload" class="btn-toggle">Upload File (Logs / CSV / PCAP / PDF)</button>
+          </div>
+        </div>
+
+        <div id="pasteGroup" class="form-group">
+          <label for="pasteFilename">Source Filename:</label>
+          <input type="text" id="pasteFilename" class="cyber-input" placeholder="e.g. nginx_access.log, audit.log, auth.log">
+
+          <label for="pasteSourceType">Log Format:</label>
+          <select id="pasteSourceType" class="cyber-select">
+            <option value="nginx">Nginx Access Log</option>
+            <option value="apache">Apache Access Log</option>
+            <option value="app_log">Application Log (JSON / Syslog)</option>
+            <option value="waf_alert">WAF Alert (ModSecurity / Suricata)</option>
+            <option value="auth_log">Authentication Log (SSH / PAM)</option>
+            <option value="csv">CSV Security Export</option>
+          </select>
+
+          <label for="pasteContent">Raw Log Content:</label>
+          <textarea id="pasteContent" class="cyber-textarea" rows="7" placeholder="Paste raw log lines or CSV text here..."></textarea>
+        </div>
+
+        <div id="uploadGroup" class="form-group hidden">
+          <label for="fileUploadInput">Select Evidence File:</label>
+          <input type="file" id="fileUploadInput" class="cyber-file-input" accept=".log,.txt,.json,.csv,.pcap,.pcapng,.pdf">
+          <p class="form-hint">Supports .log, .txt, .json, .csv, .pcap, and PDF source report documents.</p>
+        </div>
+
+        <div class="form-group">
+          <label for="evidenceTypeSelect">Evidence Classification:</label>
+          <select id="evidenceTypeSelect" class="cyber-select">
+            <option value="Imported Evidence" selected>Imported Evidence</option>
+            <option value="Publicly Reported Fact">Publicly Reported Fact</option>
+            <option value="Simulated Demo Data">Simulated Demo Data</option>
+            <option value="Unverified Information">Unverified Information</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="custodyOfficer">Custody Officer / Investigator Name:</label>
+          <input type="text" id="custodyOfficer" class="cyber-input" value="Lead Incident Investigator">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cyber btn-secondary" data-close="modalImport">Cancel</button>
+        <button id="btnSubmitImport" class="btn-cyber btn-primary">Ingest & Correlate Evidence</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Create New Case -->
+  <div id="modalNewCase" class="cyber-modal-overlay hidden">
+    <div class="cyber-modal">
+      <div class="modal-header">
+        <h3>Create New Investigation Case</h3>
+        <button class="btn-close-modal" data-close="modalNewCase">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="newCaseTitle">Case Title:</label>
+          <input type="text" id="newCaseTitle" class="cyber-input" placeholder="e.g. Critical Infrastructure API Breach">
+        </div>
+        <div class="form-group">
+          <label for="newCaseDesc">Incident Description:</label>
+          <textarea id="newCaseDesc" class="cyber-textarea" rows="3" placeholder="Brief summary of the incident under investigation..."></textarea>
+        </div>
+        <div class="form-group">
+          <label for="newCaseCountry">Country / Jurisdiction:</label>
+          <input type="text" id="newCaseCountry" class="cyber-input" value="India">
+        </div>
+        <div class="form-group">
+          <label for="newCaseIndustry">Industry:</label>
+          <input type="text" id="newCaseIndustry" class="cyber-input" value="Banking & Financial Services">
+        </div>
+        <div class="form-group">
+          <label for="newCaseInvestigator">Lead Investigator:</label>
+          <input type="text" id="newCaseInvestigator" class="cyber-input" value="Senior Incident Responder">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cyber btn-secondary" data-close="modalNewCase">Cancel</button>
+        <button id="btnSubmitNewCase" class="btn-cyber btn-primary">Create Case</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="cyberToast" class="cyber-toast hidden"></div>
+
+  <!-- JavaScript Modules -->
+  <script src="/static/js/evidence_drawer.js"></script>
+  <script src="/static/js/graph.js"></script>
+  <script src="/static/js/timeline.js"></script>
+  <script src="/static/js/hypotheses.js"></script>
+  <script src="/static/js/gaps.js"></script>
+  <script src="/static/js/forensics.js"></script>
+  <script src="/static/js/benchmark.js"></script>
+  <script src="/static/js/case_library.js"></script>
+  <script src="/static/js/reports.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>

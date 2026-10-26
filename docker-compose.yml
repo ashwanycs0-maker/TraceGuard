@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  traceguard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: traceguard-platform
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # Persistent storage for all cases, investigations, uploaded evidence files, and hashes
+      - traceguard_cases:/app/cases_storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/cases"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  traceguard_cases:
+    driver: local
